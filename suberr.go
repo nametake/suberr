@@ -1,7 +1,9 @@
 // Package suberr provides ...
 package suberr
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func Add(main, sub error) error {
 	return &subError{
@@ -21,7 +23,7 @@ type getter interface {
 var (
 	_ error = (*subError)(nil)
 	// _ fmt.Formatter = (*subError)(nil)
-	// _ causer = (*subError)(nil)
+	_ causer = (*subError)(nil)
 	// _ getter = (*subError)(nil)
 )
 
@@ -31,4 +33,8 @@ type subError struct {
 
 func (s *subError) Error() string {
 	return fmt.Sprintf("%v: %v", s.main, s.sub)
+}
+
+func (s *subError) Cause() error {
+	return s.main
 }
