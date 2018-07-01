@@ -55,7 +55,14 @@ type subError struct {
 }
 
 func (s *subError) Error() string {
-	return fmt.Sprintf("%v: %v", s.main, s.sub)
+	if s.main == nil && s.sub == nil {
+		return ""
+	} else if s.main != nil && s.sub == nil {
+		return s.main.Error()
+	} else if s.main == nil && s.sub != nil {
+		return s.sub.Error()
+	}
+	return fmt.Sprintf("%v: %v", s.sub, s.main)
 }
 
 func (s *subError) Cause() error {

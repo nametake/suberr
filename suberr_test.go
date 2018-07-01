@@ -17,12 +17,14 @@ func TestSubCause(t *testing.T) {
 	tests := []struct {
 		name     string
 		arg      error
+		wantStr  string
 		wantSub  error
 		wantMain error
 	}{
 		{
 			name:     "all nil",
 			arg:      Add(nil, nil),
+			wantStr:  "",
 			wantSub:  nil,
 			wantMain: nil,
 		},
@@ -32,12 +34,16 @@ func TestSubCause(t *testing.T) {
 				errors.New("main error"),
 				errors.New("sub error"),
 			),
+			wantStr:  "sub error: main error",
 			wantSub:  errors.New("sub error"),
 			wantMain: errors.New("main error"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if diff := cmp.Diff(tt.arg.Error(), tt.wantStr); diff != "" {
+				t.Errorf("not equals Error() : %s\n", diff)
+			}
 			if diff := cmp.Diff(SubCause(tt.arg), tt.wantSub, errCmp); diff != "" {
 				t.Errorf("failed suberr.SubCause: %s\n", diff)
 			}
