@@ -134,7 +134,7 @@ func TestSubCause(t *testing.T) {
 				t.Errorf("failed suberr.SubCause: %s\n", diff)
 			}
 			if diff := cmp.Diff(errors.Cause(tt.arg), tt.wantMain, errCmp); diff != "" {
-				t.Error("failed errors.Cause: %s\n", diff)
+				t.Errorf("failed errors.Cause: %s\n", diff)
 			}
 		})
 	}
