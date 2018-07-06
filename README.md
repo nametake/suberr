@@ -21,24 +21,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-func first() error {
-	err := errors.New("cause")
-	return errors.Wrap(err, "first")
-}
-
-func second() error {
-	err := first()
-	err = suberr.Add(err, errors.New("sub"))
-	return errors.Wrap(err, "second")
-}
-
-func third() error {
-	err := second()
-	return errors.Wrap(err, "third")
-}
-
 func main() {
-	err := third()
+	err := errors.New("cause")
+
+	err = errors.Wrap(err, "first")
+	err = suberr.Add(err, errors.New("sub"))
+	err = errors.Wrap(err, "second")
+	err = errors.Wrap(err, "third")
+
 	fmt.Println(err)                  // third: second: sub: first: cause
 	fmt.Println(suberr.SubCause(err)) // sub
 	fmt.Println(errors.Cause(err))    // main
