@@ -31,6 +31,6 @@ func main() {
 
 	fmt.Println(err)                  // third: second: sub: first: cause
 	fmt.Println(suberr.SubCause(err)) // sub
-	fmt.Println(errors.Cause(err))    // main
+	fmt.Println(errors.Cause(err))    // cause
 }
 ```
