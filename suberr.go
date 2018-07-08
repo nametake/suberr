@@ -15,12 +15,14 @@ func Add(main, sub error) error {
 }
 
 func WithMessage(main, sub error, msg string) error {
-	return errors.Wrap(
-		&subError{
-			main: main,
-			sub:  sub,
-		}, msg,
-	)
+	err := &subError{
+		main: main,
+		sub:  sub,
+	}
+	if msg != "" {
+		return errors.Wrap(err, msg)
+	}
+	return err
 }
 
 func SubCause(err error) error {
