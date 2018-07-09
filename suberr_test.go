@@ -197,3 +197,11 @@ func TestSubCause(t *testing.T) {
 		})
 	}
 }
+
+func TestSubCuaseNil(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		if got := SubCause(nil); got != nil {
+			t.Errorf("SubCause() returns not nil: got: %v, want <nil>", got)
+		}
+	})
+}
