@@ -132,6 +132,12 @@ func TestSubCause(t *testing.T) {
 			cause: nil,
 		},
 		{
+			name:  "normal error",
+			err:   errors.New("error"),
+			want:  nil,
+			cause: errors.New("error"),
+		},
+		{
 			name:  "simple",
 			err:   Add(errors.New("main error"), errors.New("sub error")),
 			want:  errors.New("sub error"),
