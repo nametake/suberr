@@ -3,7 +3,6 @@ package suberr
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 )
 
@@ -116,92 +115,162 @@ func TestWithMessage(t *testing.T) {
 }
 
 func TestSubCause(t *testing.T) {
-	errCmp := cmp.Comparer(func(x, y error) bool {
-		return x.Error() == y.Error()
-	})
 	tests := []struct {
-		name  string
-		err   error
-		want  error
-		cause error
+		name string
+		err  error
+		want string
 	}{
 		{
-			name:  "all nil",
-			err:   Add(nil, nil),
-			want:  nil,
-			cause: nil,
+			name: "simple",
+			err:  Add(errors.New("main error"), errors.New("sub error")),
+			want: "sub error",
 		},
 		{
-			name:  "simple",
-			err:   Add(errors.New("main error"), errors.New("sub error")),
-			want:  errors.New("sub error"),
-			cause: errors.New("main error"),
+			name: "nil main error",
+			err:  Add(nil, errors.New("sub error")),
+			want: "sub error",
 		},
 		{
-			name:  "nil main error",
-			err:   Add(nil, errors.New("sub error")),
-			want:  errors.New("sub error"),
-			cause: nil,
+			name: "use errors.Wrap outermost",
+			err:  errors.Wrap(Add(errors.New("main error"), errors.New("sub error")), "outer"),
+			want: "sub error",
 		},
 		{
-			name:  "nil sub error",
-			err:   Add(errors.New("main error"), nil),
-			want:  nil,
-			cause: errors.New("main error"),
+			name: "wraped main error",
+			err:  Add(errors.Wrap(errors.New("main error"), "wrap main"), errors.New("sub error")),
+			want: "sub error",
 		},
 		{
-			name:  "use errors.Wrap outermost",
-			err:   errors.Wrap(Add(errors.New("main error"), errors.New("sub error")), "outer"),
-			want:  errors.New("sub error"),
-			cause: errors.New("main error"),
+			name: "use errors.Wrap outermost and wraped main error",
+			err:  errors.Wrap(Add(errors.Wrap(errors.New("main error"), "wrap main"), errors.New("sub error")), "outer"),
+			want: "sub error",
 		},
 		{
-			name:  "wraped main error",
-			err:   Add(errors.Wrap(errors.New("main error"), "wrap main"), errors.New("sub error")),
-			want:  errors.New("sub error"),
-			cause: errors.New("main error"),
+			name: "use multiple suberr.Add",
+			err:  Add(Add(errors.New("main error"), errors.New("inner sub error")), errors.New("outer sub error")),
+			want: "outer sub error",
 		},
 		{
-			name:  "use errors.Wrap outermost and wraped main error",
-			err:   errors.Wrap(Add(errors.Wrap(errors.New("main error"), "wrap main"), errors.New("sub error")), "outer"),
-			want:  errors.New("sub error"),
-			cause: errors.New("main error"),
-		},
-		{
-			name:  "use multiple suberr.Add",
-			err:   Add(Add(errors.New("main error"), errors.New("inner sub error")), errors.New("outer sub error")),
-			want:  errors.New("outer sub error"),
-			cause: errors.New("main error"),
-		},
-		{
-			name:  "use multiple suberr.Add and nil outer sub error",
-			err:   Add(Add(errors.New("main error"), errors.New("inner sub error")), nil),
-			want:  nil,
-			cause: errors.New("main error"),
-		},
-		{
-			name:  "use WithMessage",
-			err:   WithMessage(errors.New("main error"), errors.New("sub error"), "msg"),
-			want:  errors.New("sub error"),
-			cause: errors.New("main error"),
+			name: "use WithMessage",
+			err:  WithMessage(errors.New("main error"), errors.New("sub error"), "msg"),
+			want: "sub error",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if diff := cmp.Diff(SubCause(tt.err), tt.want, errCmp); diff != "" {
-				t.Errorf("SubCause(): diff: %s\n", diff)
-			}
-			if diff := cmp.Diff(errors.Cause(tt.err), tt.cause, errCmp); diff != "" {
-				t.Errorf("errors.Cause(): diff: %s\n", diff)
+			if got := SubCause(tt.err); got.Error() != tt.want {
+				t.Errorf("SubCause(): got: %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestSubCuaseNil(t *testing.T) {
-	t.Run("nil", func(t *testing.T) {
-		if got := SubCause(nil); got != nil {
-			t.Errorf("SubCause() returns not nil: got: %v, want <nil>", got)
-		}
-	})
+func TestSubCauseNil(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "nil",
+			err:  nil,
+		},
+		{
+			name: "all nil",
+			err:  Add(nil, nil),
+		},
+		{
+			name: "nil sub error",
+			err:  Add(errors.New("main error"), nil),
+		},
+		{
+			name: "use multiple suberr.Add and nil outer sub error",
+			err:  Add(Add(errors.New("main error"), errors.New("inner sub error")), nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SubCause(tt.err); got != nil {
+				t.Errorf("SubCuase(): got: %s, want nil", got)
+			}
+		})
+	}
+}
+
+func TestCause(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{
+			name: "simple",
+			err:  Add(errors.New("main error"), errors.New("sub error")),
+			want: "main error",
+		},
+		{
+			name: "nil sub error",
+			err:  Add(errors.New("main error"), nil),
+			want: "main error",
+		},
+		{
+			name: "use errors.Wrap outermost",
+			err:  errors.Wrap(Add(errors.New("main error"), errors.New("sub error")), "outer"),
+			want: "main error",
+		},
+		{
+			name: "wraped main error",
+			err:  Add(errors.Wrap(errors.New("main error"), "wrap main"), errors.New("sub error")),
+			want: "main error",
+		},
+		{
+			name: "use errors.Wrap outermost and wraped main error",
+			err:  errors.Wrap(Add(errors.Wrap(errors.New("main error"), "wrap main"), errors.New("sub error")), "outer"),
+			want: "main error",
+		},
+		{
+			name: "use multiple suberr.Add",
+			err:  Add(Add(errors.New("main error"), errors.New("inner sub error")), errors.New("outer sub error")),
+			want: "main error",
+		},
+		{
+			name: "use multiple suberr.Add and nil outer sub error",
+			err:  Add(Add(errors.New("main error"), errors.New("inner sub error")), nil),
+			want: "main error",
+		},
+		{
+			name: "use WithMessage",
+			err:  WithMessage(errors.New("main error"), errors.New("sub error"), "msg"),
+			want: "main error",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := errors.Cause(tt.err); got.Error() != tt.want {
+				t.Errorf("errors.Cause(): got: %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCauseNil(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "all nil",
+			err:  Add(nil, nil),
+		},
+		{
+			name: "nil main error",
+			err:  Add(nil, errors.New("sub error")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := errors.Cause(tt.err); got != nil {
+				t.Errorf("errors.Cause(): got: %v, want nil ", got)
+			}
+		})
+	}
 }
