@@ -76,3 +76,18 @@ func (s *subError) Cause() error {
 func (s *subError) SubCause() error {
 	return s.sub
 }
+
+func (s *subError) Format(st fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if st.Flag('+') {
+			fmt.Fprintf(st, "%+v", s.main)
+			return
+		}
+		fallthrough
+	case 's':
+		fmt.Fprintf(st, "%s", s.main)
+	case 'q':
+		fmt.Fprintf(st, "%q", s.main)
+	}
+}
