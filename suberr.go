@@ -1,4 +1,11 @@
-// Package suberr provides ...
+// Package suberr provides to add sub error to error.
+//
+// The suberr.Add function returns new erorr that added sub error to the original error.
+// The sub error can be retrieved with suberr.SubCause function.
+//
+// This is supported to be used with github.com/pkg/errors.
+// So, errors that added sub error implement the Cause method and also supported to errors.Cause.
+// And, it dosen't lose stacktrace that given by github.com/pkg/errors
 package suberr
 
 import (
@@ -7,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Add returns an error added sub error to the main error.
 func Add(main, sub error) error {
 	return &subError{
 		main: main,
@@ -14,6 +22,7 @@ func Add(main, sub error) error {
 	}
 }
 
+// WithMessage returns an error added sub error and message to the main error.
 func WithMessage(main, sub error, msg string) error {
 	err := &subError{
 		main: main,
@@ -25,6 +34,8 @@ func WithMessage(main, sub error, msg string) error {
 	return err
 }
 
+// SubCause returns the last added sub error.
+// Even if errors are wrapped using errors.Wrap.
 func SubCause(err error) error {
 	for err != nil {
 		subCause, ok := err.(subCauser)
