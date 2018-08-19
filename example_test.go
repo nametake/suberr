@@ -7,20 +7,35 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ExampleSubCause() {
-	err := errors.New("cause")
+var errSub = errors.New("sub error")
 
-	err = errors.Wrap(err, "first")
-	err = suberr.Add(err, errors.New("sub"))
-	err = errors.Wrap(err, "second")
-	err = errors.Wrap(err, "third")
+func cause() error {
+	return errors.New("cause")
+}
+
+func first() error {
+	err := cause()
+	err = suberr.Add(err, errSub)
+	return errors.Wrap(err, "first")
+
+	// one line:
+	// return suberr.WithMessage(err, errSub, "first")
+}
+
+func second() error {
+	err := first()
+	return errors.Wrap(err, "second")
+}
+
+func Example() {
+	err := second()
 
 	fmt.Println(err)
 	fmt.Println(suberr.SubCause(err))
 	fmt.Println(errors.Cause(err))
 
 	// Output:
-	// third: second: sub: first: cause
-	// sub
+	// second: first: sub error: cause
+	// sub error
 	// cause
 }
